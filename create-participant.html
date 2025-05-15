@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <title>Створення учасника</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 50px;
+            background-color: #B57EDC;
+            position: relative;
+            height: 100vh; /* Робимо висоту екрану 100% */
+            overflow: hidden; /* Щоб об'єкти не виходили за межі */
+        }
+        h1 {
+            color: #333;
+        }
+        input {
+            padding: 10px;
+            margin: 10px;
+            width: 250px;
+            font-size: 16px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+        .button {
+            padding: 10px 20px;
+            font-size: 16px;
+            color: #fff;
+            background: linear-gradient(45deg, #28a745, #007bff, #6f42c1);
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: background 0.3s ease;
+        }
+        .button:hover {
+            background: linear-gradient(45deg, #218838, #0056b3, #5a2a8e);
+        }
+        #participantList {
+            margin-top: 40px;
+            text-align: left;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        #participantList li {
+            background-color: #e0f0ff;
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        #participantList button {
+            background-color: #ff4d4d;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            padding: 5px 10px;
+        }
+        #participantList button:hover {
+            background-color: #cc0000;
+        }
+        .circle {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            background-color: rgba(0, 123, 255, 0.6);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
+            pointer-events: none; /* Щоб кола не блокували інші елементи */
+            transition: transform 0.1s ease; /* Плавний рух */
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Створення учасника</h1>
+
+    <input type="text" id="firstName" placeholder="Ім’я"><br>
+    <input type="text" id="lastName" placeholder="Прізвище"><br>
+    <input type="text" id="middleName" placeholder="По батькові"><br>
+
+    <button class="button" onclick="saveParticipant()">Зберегти учасника</button>
+    <button class="button" onclick="startMiniGame()">Міні гра</button>
+
+    <ul id="participantList"></ul>
+
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+<script>
+   const firebaseConfig = {
+    apiKey: "AIzaSyDweE6o4hbBYMys1fj9GSUwLaGkigiujEQ",
+    authDomain: "eshkere-21329.firebaseapp.com",
+    projectId: "eshkere-21329",
+    storageBucket: "eshkere-21329.firebasestorage.app",
+    messagingSenderId: "117620463443",
+    appId: "1:117620463443:web:8a39e8acd6367ec60833a6"
+  };
+
+  // Ініціалізація Firebase
+  const app = firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+</script>
+
+
+    <script>
+    let circles = []; // Масив для зберігання інформації про кола
+
+    // Завантаження учасників з Firestore
+    function loadParticipants() {
+        const list = document.getElementById('participantList');
+        list.innerHTML = '';
+
+        db.collection("participants").orderBy("timestamp").get()
+            .then((querySnapshot) => {
+                querySnapshot.forEach((doc) => {
+                    const participant = doc.data().fullName;
+
+                    const listItem = document.createElement('li');
+                    listItem.textContent = participant;
+
+                    const deleteButton = document.createElement('button');
+                    deleteButton.textContent = 'Видалити';
+                    deleteButton.onclick = () => deleteParticipant(doc.id);
+
+                    listItem.appendChild(deleteButton);
+                    list.appendChild(listItem);
+                });
+            })
+            .catch((error) => {
+                console.error("Помилка завантаження: ", error);
+            });
+    }
+
+    // Збереження учасника у Firestore
+    function saveParticipant() {
+        const firstName = document.getElementById('firstName').value.trim();
+        const lastName = document.getElementById('lastName').value.trim();
+        const middleName = document.getElementById('middleName').value.trim();
+
+        if (!firstName || !lastName || !middleName) {
+            alert("Будь ласка, заповніть усі поля.");
+            return;
+        }
+
+        const fullName = `${lastName} ${firstName} ${middleName}`;
+
+        db.collection("participants").add({
+            fullName: fullName,
+            timestamp: Date.now()
+        })
+        .then(() => {
+            loadParticipants();
+            // Очищення полів
+            document.getElementById('firstName').value = '';
+            document.getElementById('lastName').value = '';
+            document.getElementById('middleName').value = '';
+        })
+        .catch((error) => {
+            console.error("Помилка збереження: ", error);
+        });
+    }
+
+    // Видалення учасника з Firestore
+    function deleteParticipant(id) {
+        db.collection("participants").doc(id).delete()
+            .then(() => {
+                loadParticipants();
+            })
+            .catch((error) => {
+                console.error("Помилка видалення: ", error);
+            });
+    }
+
+    // Міні-гра з Firestore
+    function startMiniGame() {
+        db.collection("participants").orderBy("timestamp").get()
+            .then((querySnapshot) => {
+                querySnapshot.forEach((doc) => {
+                    const participant = doc.data().fullName;
+                    createCircle(participant); // Створення кола
+                });
+            })
+            .catch((error) => {
+                console.error("Помилка гри: ", error);
+            });
+    }
+
+    // ... решта коду (createCircle, getNewPosition, animate) залишається без змін
+
+    // Завантажити учасників при відкритті сторінки
+    window.onload = loadParticipants;
+</script>
+
+
+</body>
+</html>
