@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <title>Створення учасника</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 50px;
+            background-color: #B57EDC;
+            position: relative;
+            height: 100vh; /* Робимо висоту екрану 100% */
+            overflow: hidden; /* Щоб об'єкти не виходили за межі */
+        }
+        h1 {
+            color: #333;
+        }
+        input {
+            padding: 10px;
+            margin: 10px;
+            width: 250px;
+            font-size: 16px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+        .button {
+            padding: 10px 20px;
+            font-size: 16px;
+            color: #fff;
+            background: linear-gradient(45deg, #28a745, #007bff, #6f42c1);
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: background 0.3s ease;
+        }
+        .button:hover {
+            background: linear-gradient(45deg, #218838, #0056b3, #5a2a8e);
+        }
+        #participantList {
+            margin-top: 40px;
+            text-align: left;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        #participantList li {
+            background-color: #e0f0ff;
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        #participantList button {
+            background-color: #ff4d4d;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            padding: 5px 10px;
+        }
+        #participantList button:hover {
+            background-color: #cc0000;
+        }
+        .circle {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            background-color: rgba(0, 123, 255, 0.6);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
+            pointer-events: none; /* Щоб кола не блокували інші елементи */
+            transition: transform 0.1s ease; /* Плавний рух */
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Створення учасника</h1>
+
+    <input type="text" id="firstName" placeholder="Ім’я"><br>
+    <input type="text" id="lastName" placeholder="Прізвище"><br>
+    <input type="text" id="middleName" placeholder="По батькові"><br>
+
+    <button class="button" onclick="saveParticipant()">Зберегти учасника</button>
+    <button class="button" onclick="startMiniGame()">Міні гра</button>
+
+    <ul id="participantList"></ul>
+
+    <script>
+        let circles = []; // Масив для зберігання інформації про кола
+
+        // Функція для завантаження учасників з localStorage
+        function loadParticipants() {
+            const participants = JSON.parse(localStorage.getItem('participants')) || [];
+            const list = document.getElementById('participantList');
+            list.innerHTML = ''; // Очищаємо поточний список
+            participants.forEach(function(participant) {
+                const listItem = document.createElement('li');
+                listItem.textContent = participant;
+                
+                const deleteButton = document.createElement('button');
+                deleteButton.textContent = 'Видалити';
+                deleteButton.onclick = function() {
+                    deleteParticipant(participant);
+                };
+
+                listItem.appendChild(deleteButton);
+                list.appendChild(listItem);
+            });
+        }
+
+        // Функція для збереження учасника в localStorage
+        function saveParticipant() {
+            const firstName = document.getElementById('firstName').value.trim();
+            const lastName = document.getElementById('lastName').value.trim();
+            const middleName = document.getElementById('middleName').value.trim();
+
+            if (!firstName || !lastName || !middleName) {
+                alert("Будь ласка, заповніть усі поля.");
+                return;
+            }
+
+            const fullName = `${lastName} ${firstName} ${middleName}`;
+            const participants = JSON.parse(localStorage.getItem('participants')) || [];
+            participants.push(fullName);
+            localStorage.setItem('participants', JSON.stringify(participants));
+
+            loadParticipants(); // Оновлюємо список учасників
+
+            // Очищаємо поля форми
+            document.getElementById('firstName').value = '';
+            document.getElementById('lastName').value = '';
+            document.getElementById('middleName').value = '';
+        }
+
+        // Функція для видалення учасника
+        function deleteParticipant(participantName) {
+            const participants = JSON.parse(localStorage.getItem('participants')) || [];
+            const updatedParticipants = participants.filter(function(participant) {
+                return participant !== participantName;
+            });
+            localStorage.setItem('participants', JSON.stringify(updatedParticipants));
+
+            loadParticipants(); // Оновлюємо список учасників
+        }
+
+        // Функція для запуску міні-ігри
+        function startMiniGame() {
+            const participants = JSON.parse(localStorage.getItem('participants')) || [];
+            participants.forEach(function(participant) {
+                createCircle(participant); // Створюємо коло для кожного учасника
+            });
+        }
+
+        // Функція для створення кола з ім'ям учасника
+        function createCircle(name) {
+            const circle = document.createElement('div');
+            circle.classList.add('circle');
+            circle.textContent = name;
+
+            // Позиціонуємо кожне коло на випадкових координатах
+            let x, y;
+            let collides;
+
+            do {
+                collides = false;
+                x = Math.random() * (window.innerWidth - 50); // Випадкова координата X
+                y = Math.random() * (window.innerHeight - 50); // Випадкова координата Y
+
+                // Перевірка на колізії з іншими колами
+                for (let i = 0; i < circles.length; i++) {
+                    const existingCircle = circles[i];
+                    const distance = Math.sqrt(Math.pow(x - existingCircle.x, 2) + Math.pow(y - existingCircle.y, 2));
+                    if (distance < 60) { // Якщо відстань менша за 60px (радіус + додатковий запас)
+                        collides = true;
+                        break;
+                    }
+                }
+            } while (collides); // Якщо є колізія, пробуємо знову
+
+            circle.style.left = `${x}px`;
+            circle.style.top = `${y}px`;
+
+            // Додаємо нове коло в масив для подальшої перевірки
+            circles.push({ x, y, name, element: circle });
+
+            // Додаємо коло до body
+            document.body.appendChild(circle);
+
+            // Переслідування курсора плавно
+            let targetX = 0, targetY = 0;
+            let currentX = x, currentY = y;
+            const speed = 0.05; // Швидкість руху
+
+            document.addEventListener('mousemove', function(event) {
+                targetX = event.clientX;
+                targetY = event.clientY;
+            });
+
+            function animate() {
+                const deltaX = targetX - currentX;
+                const deltaY = targetY - currentY;
+
+                currentX += deltaX * speed;
+                currentY += deltaY * speed;
+
+                // Оновлюємо стиль для кола
+                circle.style.left = `${currentX - 25}px`; // Центруємо коло
+                circle.style.top = `${currentY - 25}px`;
+
+                // Перевірка на колізії під час руху
+                for (let i = 0; i < circles.length; i++) {
+                    const existingCircle = circles[i];
+                    const distance = Math.sqrt(Math.pow(currentX - existingCircle.x, 2) + Math.pow(currentY - existingCircle.y, 2));
+                    if (distance < 60) {
+                        // Якщо колізія, переміщаємо коло в нове місце
+                        const newPos = getNewPosition();
+                        currentX = newPos.x;
+                        currentY = newPos.y;
+                        break;
+                    }
+                }
+
+                requestAnimationFrame(animate); // Рекурсивний виклик для плавності
+            }
+
+            animate(); // Запускаємо анімацію
+        }
+
+        // Функція для отримання нової позиції без колізій
+        function getNewPosition() {
+            let x, y;
+            let collides;
+
+            do {
+                collides = false;
+                x = Math.random() * (window.innerWidth - 50); // Випадкова координата X
+                y = Math.random() * (window.innerHeight - 50); // Випадкова координата Y
+
+                // Перевірка на колізії з іншими колами
+                for (let i = 0; i < circles.length; i++) {
+                    const existingCircle = circles[i];
+                    const distance = Math.sqrt(Math.pow(x - existingCircle.x, 2) + Math.pow(y - existingCircle.y, 2));
+                    if (distance < 60) { // Якщо відстань менша за 60px
+                        collides = true;
+                        break;
+                    }
+                }
+            } while (collides); // Якщо є колізія, пробуємо знову
+
+            return { x, y };
+        }
+
+        // Завантажуємо учасників при завантаженні сторінки
+        window.onload = loadParticipants;
+    </script>
+
+</body>
+</html>

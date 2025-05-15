@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <title>Гурток програмування</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 50px;
+            background-color: rgba(220, 183, 255, 1); /* Оновлений колір фону */
+            position: relative;
+            cursor: url('blue-star.png'), auto; /* Кастомний курсор з зображенням зірки */
+        }
+        h1 {
+            color: #333;
+        }
+        .button {
+            display: inline-block;
+            margin: 10px;
+            padding: 15px 25px;
+            font-size: 16px;
+            color: #fff;
+            background-color: #4CAF50;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none;
+        }
+        .button:hover {
+            background-color: #45a049;
+        }
+        /* Стиль для зірки */
+        .star {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            width: 40px;
+            height: 40px;
+            background-image: url('star-icon.png'); /* Зображення зірки */
+            background-size: cover;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Гурток програмування</h1>
+
+    <a href="https://scratch.mit.edu" target="_blank" class="button">Scratch</a>
+    <a href="https://flipanim.com" target="_blank" class="button">FlipAnim</a>
+    <button class="button" onclick="window.location.href='create-participant.html'">Створити учасників</button>
+
+    <!-- Зірка для переходу на YouTube -->
+    <div class="star" onclick="window.location.href='https://www.youtube.com'"></div>
+
+    <script>
+        function createParticipants() {
+            alert("Функція створення учасників ще не реалізована.");
+        }
+    </script>
+
+</body>
+</html>
