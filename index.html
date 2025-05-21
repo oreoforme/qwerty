@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <title>Гурток програмування</title>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: rgba(220, 183, 255, 1);
+            text-align: center;
+            margin: 0;
+            padding: 0;
+            cursor: url('blue-star.png'), auto;
+        }
+
+        h1 {
+            color: #333;
+            margin-top: 50px;
+        }
+
+        .auth-container {
+            background-color: #fff;
+            padding: 30px;
+            margin: 30px auto;
+            width: 90%;
+            max-width: 350px;
+            border-radius: 20px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+            text-align: center;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 25px;
+            box-sizing: border-box;
+            font-size: 14px;
+        }
+
+        .button {
+            display: inline-block;
+            margin: 10px 5px;
+            padding: 12px 25px;
+            font-size: 16px;
+            color: #fff;
+            background-color: #4CAF50;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            text-decoration: none;
+            transition: background-color 0.3s;
+        }
+
+        .button:hover {
+            background-color: #45a049;
+        }
+
+        .star {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            width: 40px;
+            height: 40px;
+            background-image: url('star-icon.png');
+            background-size: cover;
+            cursor: pointer;
+        }
+
+        .links {
+            margin-top: 20px;
+        }
+
+        .user-info {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: #ffffffcc;
+            padding: 10px 20px;
+            border-radius: 20px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 14px;
+        }
+
+        .user-info .email {
+            font-weight: bold;
+            color: #333;
+        }
+
+        .user-info button {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 15px;
+            color: white;
+            cursor: pointer;
+        }
+
+        .logout {
+            background-color: #f44336;
+        }
+
+        .logout:hover {
+            background-color: #d32f2f;
+        }
+
+        .delete {
+            background-color: #9c27b0;
+        }
+
+        .delete:hover {
+            background-color: #7b1fa2;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Гурток програмування</h1>
+
+    <div id="userPanel" class="user-info" style="display: none;">
+        <span class="email" id="userEmail">user@example.com</span>
+        <button class="logout" onclick="logout()">Вийти</button>
+        <button class="delete" onclick="deleteAccount()">Видалити</button>
+    </div>
+
+    <div id="authForm" class="auth-container">
+        <h3>Авторизація</h3>
+        <input type="email" id="email" placeholder="Email">
+        <input type="password" id="password" placeholder="Пароль">
+        <button class="button" onclick="login()">Увійти</button>
+        <button class="button" onclick="register()">Реєстрація</button>
+    </div>
+
+    <div class="links">
+        <a href="https://scratch.mit.edu" target="_blank" class="button">Scratch</a>
+        <a href="https://flipanim.com" target="_blank" class="button">FlipAnim</a>
+        <button class="button" onclick="window.location.href='create-participant.html'">Створити учасників</button>
+    </div>
+
+    <div class="star" onclick="window.location.href='https://www.youtube.com'"></div>
+
+    <script>
+        // Firebase конфігурація
+        const firebaseConfig = {
+            apiKey: "AIzaSyDweE6o4hbBYMys1fj9GSUwLaGkigiujEQ",
+            authDomain: "eshkere-21329.firebaseapp.com",
+            projectId: "eshkere-21329",
+            storageBucket: "eshkere-21329.appspot.com",
+            messagingSenderId: "117620463443",
+            appId: "1:117620463443:web:8a39e8acd6367ec60833a6"
+        };
+
+        // Ініціалізація
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        function login() {
+            const email = document.getElementById("email").value;
+            const password = document.getElementById("password").value;
+            auth.signInWithEmailAndPassword(email, password)
+                .catch(error => alert("Помилка входу: " + error.message));
+        }
+
+        function register() {
+            const email = document.getElementById("email").value;
+            const password = document.getElementById("password").value;
+            auth.createUserWithEmailAndPassword(email, password)
+                .then(userCredential => {
+                    // Додаємо користувача в Firestore
+                    return db.collection("users").doc(userCredential.user.uid).set({
+                        email: email,
+                        createdAt: new Date()
+                    });
+                })
+                .catch(error => alert("Помилка реєстрації: " + error.message));
+        }
+
+        function logout() {
+            auth.signOut();
+        }
+
+        function deleteAccount() {
+            const user = auth.currentUser;
+            if (user) {
+                const uid = user.uid;
+                if (confirm("Ви дійсно хочете видалити обліковий запис? Це дію неможливо скасувати.")) {
+                    // Видаляємо з Firestore
+                    db.collection("users").doc(uid).delete()
+                        .then(() => {
+                            // Потім видаляємо акаунт з Authentication
+                            return user.delete();
+                        })
+                        .then(() => {
+                            alert("Акаунт успішно видалено.");
+                        })
+                        .catch(error => {
+                            alert("Помилка видалення: " + error.message);
+                        });
+                }
+            }
+        }
+
+        // Відслідковує стан користувача
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                document.getElementById("userEmail").textContent = user.email;
+                document.getElementById("userPanel").style.display = "flex";
+                document.getElementById("authForm").style.display = "none";
+            } else {
+                document.getElementById("userPanel").style.display = "none";
+                document.getElementById("authForm").style.display = "block";
+            }
+        });
+    </script>
+
+</body>
+</html>
